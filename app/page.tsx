@@ -34,10 +34,12 @@ type ScheduleItem = {
 
 type MealUsage = Record<MealType, boolean>;
 
-const MAX_BREAK_MINUTES = 10;
+const MAX_BREAK_MINUTES = 20;
+const DEFAULT_BREAK_MINUTES = 10;
 const MEAL_BREAK_MINUTES = 30;
 const POSTURE_REMINDER_SECONDS = 45 * 60;
 const STORAGE_KEY = "momentum-pomodoro-state-v1";
+const SHOW_TEMP_POSTURE_TEST_CONTROLS = process.env.NODE_ENV !== "production";
 const MOTIVATIONAL_MESSAGES = [
   "Future-you is built by the choice you make in the next few minutes.",
   "You do not need perfect energy to protect meaningful progress.",
@@ -64,6 +66,7 @@ type PersistedState = {
   usedMeals: MealUsage;
   isRunning: boolean;
   elapsedActiveSeconds: number;
+  lastPostureReminderElapsedSeconds: number;
   posturePromptMode: DeskMode;
   nextDeskMode: DeskMode;
 };
@@ -87,6 +90,24 @@ function createTask(title: string, plannedMinutes: number): Task {
 
 function clampMinutes(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function sanitizeNumberInput(value: string): string {
+  return value.replace(/[^\d]/g, "");
+}
+
+function parseNumberInput(value: string): number | null {
+  if (value.length === 0) {
+    return null;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+
+  return Math.trunc(parsed);
 }
 
 function countWords(text: string): number {
@@ -145,7 +166,8 @@ function isDeskMode(value: unknown): value is DeskMode {
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [breakMinutes, setBreakMinutes] = useState(10);
+  const [breakMinutes, setBreakMinutes] = useState(DEFAULT_BREAK_MINUTES);
+  const [breakMinutesInput, setBreakMinutesInput] = useState(String(DEFAULT_BREAK_MINUTES));
   const [mode, setMode] = useState<Mode>("planning");
   const [viewMode, setViewMode] = useState<ViewMode>("setup");
   const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
@@ -159,6 +181,7 @@ export default function Home() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [hasLoadedPersistedState, setHasLoadedPersistedState] = useState(false);
   const [elapsedActiveSeconds, setElapsedActiveSeconds] = useState(0);
+  const [lastPostureReminderElapsedSeconds, setLastPostureReminderElapsedSeconds] = useState(0);
   const [postureModalOpen, setPostureModalOpen] = useState(false);
   const [posturePromptMode, setPosturePromptMode] = useState<DeskMode>("standing");
   const [nextDeskMode, setNextDeskMode] = useState<DeskMode>("standing");
@@ -168,20 +191,24 @@ export default function Home() {
   const [addTaskModalOpen, setAddTaskModalOpen] = useState(false);
   const [addTaskTitle, setAddTaskTitle] = useState("");
   const [addTaskMinutes, setAddTaskMinutes] = useState(25);
+  const [addTaskMinutesInput, setAddTaskMinutesInput] = useState("25");
   const [addTaskError, setAddTaskError] = useState("");
 
   const [focusExtendModalOpen, setFocusExtendModalOpen] = useState(false);
   const [focusExtendMinutes, setFocusExtendMinutes] = useState(10);
+  const [focusExtendMinutesInput, setFocusExtendMinutesInput] = useState("10");
 
   const [intermittentModalOpen, setIntermittentModalOpen] = useState(false);
   const [intermittentReflection, setIntermittentReflection] = useState("");
   const [intermittentBreakMinutes, setIntermittentBreakMinutes] = useState(5);
+  const [intermittentBreakMinutesInput, setIntermittentBreakMinutesInput] = useState("5");
   const [intermittentSelectedMeal, setIntermittentSelectedMeal] = useState<MealType | null>(null);
   const [intermittentError, setIntermittentError] = useState("");
   const [motivation, setMotivation] = useState(MOTIVATIONAL_MESSAGES[0]);
 
   const [breakExtendModalOpen, setBreakExtendModalOpen] = useState(false);
   const [breakExtendMinutes, setBreakExtendMinutes] = useState(1);
+  const [breakExtendMinutesInput, setBreakExtendMinutesInput] = useState("1");
   const [breakExtendSelectedMeal, setBreakExtendSelectedMeal] = useState<MealType | null>(null);
   const [breakExtendError, setBreakExtendError] = useState("");
 
@@ -198,9 +225,11 @@ export default function Home() {
   const usedMealCount = Object.values(usedMeals).filter(Boolean).length;
   const intermittentWordCount = countWords(intermittentReflection);
   const availableBreakExtensionMinutes = Math.max(0, MAX_BREAK_MINUTES - Math.round(currentPhaseAllocatedSeconds / 60));
-  const postureSecondsIntoCycle = elapsedActiveSeconds % POSTURE_REMINDER_SECONDS;
+  const postureSecondsSinceLastReminder = elapsedActiveSeconds - lastPostureReminderElapsedSeconds;
   const postureSecondsUntilReminder =
-    postureSecondsIntoCycle === 0 ? POSTURE_REMINDER_SECONDS : POSTURE_REMINDER_SECONDS - postureSecondsIntoCycle;
+    postureSecondsSinceLastReminder >= POSTURE_REMINDER_SECONDS
+      ? 0
+      : POSTURE_REMINDER_SECONDS - Math.max(postureSecondsSinceLastReminder, 0);
   const mainMotivationMessage = MOTIVATIONAL_MESSAGES[currentTaskIndex % MOTIVATIONAL_MESSAGES.length];
 
   useEffect(() => {
@@ -236,7 +265,9 @@ export default function Home() {
       }
 
       if (typeof parsed.breakMinutes === "number") {
-        setBreakMinutes(clampMinutes(parsed.breakMinutes, 1, MAX_BREAK_MINUTES));
+        const nextBreakMinutes = clampMinutes(parsed.breakMinutes, 1, MAX_BREAK_MINUTES);
+        setBreakMinutes(nextBreakMinutes);
+        setBreakMinutesInput(String(nextBreakMinutes));
       }
 
       if (isMode(parsed.mode)) {
@@ -283,6 +314,10 @@ export default function Home() {
         setElapsedActiveSeconds(parsed.elapsedActiveSeconds);
       }
 
+      if (typeof parsed.lastPostureReminderElapsedSeconds === "number" && parsed.lastPostureReminderElapsedSeconds >= 0) {
+        setLastPostureReminderElapsedSeconds(parsed.lastPostureReminderElapsedSeconds);
+      }
+
       if (isDeskMode(parsed.posturePromptMode)) {
         setPosturePromptMode(parsed.posturePromptMode);
       }
@@ -315,6 +350,7 @@ export default function Home() {
       usedMeals,
       isRunning,
       elapsedActiveSeconds,
+      lastPostureReminderElapsedSeconds,
       posturePromptMode,
       nextDeskMode
     };
@@ -330,6 +366,7 @@ export default function Home() {
     isHydrated,
     isRunning,
     mode,
+    lastPostureReminderElapsedSeconds,
     nextDeskMode,
     posturePromptMode,
     remainingSeconds,
@@ -372,13 +409,11 @@ export default function Home() {
   }, [isRunning, mode]);
 
   useEffect(() => {
-    if (
-      elapsedActiveSeconds === 0 ||
-      elapsedActiveSeconds % POSTURE_REMINDER_SECONDS !== 0 ||
-      mode === "planning" ||
-      mode === "complete" ||
-      postureModalOpen
-    ) {
+    if (mode === "planning" || mode === "complete" || postureModalOpen) {
+      return;
+    }
+
+    if (elapsedActiveSeconds - lastPostureReminderElapsedSeconds < POSTURE_REMINDER_SECONDS) {
       return;
     }
 
@@ -387,7 +422,7 @@ export default function Home() {
     setResumeAfterPostureReminder(isRunning);
     setPostureModalOpen(true);
     setIsRunning(false);
-  }, [elapsedActiveSeconds, isRunning, mode, nextDeskMode, postureModalOpen]);
+  }, [elapsedActiveSeconds, isRunning, lastPostureReminderElapsedSeconds, mode, nextDeskMode, postureModalOpen]);
 
   useEffect(() => {
     if (remainingSeconds !== 0) {
@@ -440,9 +475,85 @@ export default function Home() {
     resetTransientModalRecovery();
   }
 
+  function updateBreakMinutesInput(value: string) {
+    const sanitized = sanitizeNumberInput(value);
+    setBreakMinutesInput(sanitized);
+
+    const parsed = parseNumberInput(sanitized);
+
+    if (parsed !== null) {
+      setBreakMinutes(clampMinutes(parsed, 1, MAX_BREAK_MINUTES));
+    }
+  }
+
+  function normalizeBreakMinutesInput() {
+    setBreakMinutesInput(String(clampMinutes(breakMinutes, 1, MAX_BREAK_MINUTES)));
+  }
+
+  function updateAddTaskMinutesInput(value: string) {
+    const sanitized = sanitizeNumberInput(value);
+    setAddTaskMinutesInput(sanitized);
+
+    const parsed = parseNumberInput(sanitized);
+
+    if (parsed !== null) {
+      setAddTaskMinutes(clampMinutes(parsed, 1, 240));
+    }
+  }
+
+  function normalizeAddTaskMinutesInput() {
+    setAddTaskMinutesInput(String(clampMinutes(addTaskMinutes, 1, 240)));
+  }
+
+  function updateFocusExtendMinutesInput(value: string) {
+    const sanitized = sanitizeNumberInput(value);
+    setFocusExtendMinutesInput(sanitized);
+
+    const parsed = parseNumberInput(sanitized);
+
+    if (parsed !== null) {
+      setFocusExtendMinutes(clampMinutes(parsed, 1, 180));
+    }
+  }
+
+  function normalizeFocusExtendMinutesInput() {
+    setFocusExtendMinutesInput(String(clampMinutes(focusExtendMinutes, 1, 180)));
+  }
+
+  function updateIntermittentBreakMinutesInput(value: string) {
+    const sanitized = sanitizeNumberInput(value);
+    setIntermittentBreakMinutesInput(sanitized);
+
+    const parsed = parseNumberInput(sanitized);
+
+    if (parsed !== null) {
+      setIntermittentBreakMinutes(clampMinutes(parsed, 1, MAX_BREAK_MINUTES));
+    }
+  }
+
+  function normalizeIntermittentBreakMinutesInput() {
+    setIntermittentBreakMinutesInput(String(clampMinutes(intermittentBreakMinutes, 1, MAX_BREAK_MINUTES)));
+  }
+
+  function updateBreakExtendMinutesInput(value: string) {
+    const sanitized = sanitizeNumberInput(value);
+    setBreakExtendMinutesInput(sanitized);
+
+    const parsed = parseNumberInput(sanitized);
+
+    if (parsed !== null) {
+      setBreakExtendMinutes(clampMinutes(parsed, 1, Math.max(availableBreakExtensionMinutes, 1)));
+    }
+  }
+
+  function normalizeBreakExtendMinutesInput() {
+    setBreakExtendMinutesInput(String(clampMinutes(breakExtendMinutes, 1, Math.max(availableBreakExtensionMinutes, 1))));
+  }
+
   function openAddTaskModal() {
     setAddTaskTitle("");
     setAddTaskMinutes(25);
+    setAddTaskMinutesInput("25");
     setAddTaskError("");
     setAddTaskModalOpen(true);
   }
@@ -459,6 +570,7 @@ export default function Home() {
     setAddTaskError("");
     setAddTaskTitle("");
     setAddTaskMinutes(25);
+    setAddTaskMinutesInput("25");
   }
 
   function removeTask(taskId: string) {
@@ -549,6 +661,7 @@ export default function Home() {
 
     setTasks(sessionTasks);
     setBreakMinutes(nextBreakMinutes);
+    setBreakMinutesInput(String(nextBreakMinutes));
     setPlannerError("");
     setViewMode("main");
     setMode("focus");
@@ -558,6 +671,7 @@ export default function Home() {
     setResumeFocusSeconds(null);
     setActiveMealType(null);
     setElapsedActiveSeconds(0);
+    setLastPostureReminderElapsedSeconds(0);
     setPostureModalOpen(false);
     setPosturePromptMode("standing");
     setNextDeskMode("standing");
@@ -579,6 +693,7 @@ export default function Home() {
     }
 
     setFocusExtendMinutes(10);
+    setFocusExtendMinutesInput("10");
     pauseForTransientModal(() => setFocusExtendModalOpen(true));
   }
 
@@ -601,11 +716,13 @@ export default function Home() {
     setRemainingSeconds((previous) => previous + extraMinutes * 60);
     setCurrentPhaseAllocatedSeconds((previous) => previous + extraMinutes * 60);
     setFocusExtendModalOpen(false);
+    setFocusExtendMinutesInput("10");
     resumeAfterTransientClose();
   }
 
   function cancelFocusExtend() {
     setFocusExtendModalOpen(false);
+    setFocusExtendMinutesInput(String(focusExtendMinutes));
     resumeAfterTransientClose();
   }
 
@@ -617,6 +734,7 @@ export default function Home() {
     setMotivation(MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)]);
     setIntermittentReflection("");
     setIntermittentBreakMinutes(5);
+    setIntermittentBreakMinutesInput("5");
     setIntermittentSelectedMeal(null);
     setIntermittentError("");
     pauseForTransientModal(() => setIntermittentModalOpen(true));
@@ -655,6 +773,7 @@ export default function Home() {
 
     setIntermittentModalOpen(false);
     setIntermittentError("");
+    setIntermittentBreakMinutesInput("5");
     setIntermittentSelectedMeal(null);
     setIsRunning(true);
     resetTransientModalRecovery();
@@ -665,6 +784,7 @@ export default function Home() {
     setIntermittentError("");
     setIntermittentSelectedMeal(null);
     setIntermittentReflection("");
+    setIntermittentBreakMinutesInput(String(intermittentBreakMinutes));
     resumeAfterTransientClose();
   }
 
@@ -673,7 +793,9 @@ export default function Home() {
       return;
     }
 
-    setBreakExtendMinutes(Math.min(Math.max(availableBreakExtensionMinutes, 1), 3));
+    const nextBreakExtendMinutes = Math.min(Math.max(availableBreakExtensionMinutes, 1), 3);
+    setBreakExtendMinutes(nextBreakExtendMinutes);
+    setBreakExtendMinutesInput(String(nextBreakExtendMinutes));
     setBreakExtendSelectedMeal(null);
     setBreakExtendError("");
     pauseForTransientModal(() => setBreakExtendModalOpen(true));
@@ -702,7 +824,7 @@ export default function Home() {
     }
 
     if (availableBreakExtensionMinutes <= 0) {
-      setBreakExtendError("This break is already at the 10-minute cap.");
+      setBreakExtendError("This break is already at the 20-minute cap.");
       return;
     }
 
@@ -710,6 +832,7 @@ export default function Home() {
     setRemainingSeconds((previous) => previous + extraMinutes * 60);
     setCurrentPhaseAllocatedSeconds((previous) => previous + extraMinutes * 60);
     setBreakExtendModalOpen(false);
+    setBreakExtendMinutesInput(String(extraMinutes));
     resumeAfterTransientClose();
   }
 
@@ -717,6 +840,7 @@ export default function Home() {
     setBreakExtendModalOpen(false);
     setBreakExtendError("");
     setBreakExtendSelectedMeal(null);
+    setBreakExtendMinutesInput(String(breakExtendMinutes));
     resumeAfterTransientClose();
   }
 
@@ -804,6 +928,7 @@ export default function Home() {
 
   function dismissPostureReminder() {
     setPostureModalOpen(false);
+    setLastPostureReminderElapsedSeconds(elapsedActiveSeconds);
 
     if (resumeAfterPostureReminder && mode !== "planning" && mode !== "complete") {
       setIsRunning(true);
@@ -831,6 +956,18 @@ export default function Home() {
     resumeAfterTransientClose();
   }
 
+  function triggerPostureReminderTest() {
+    if (mode === "planning" || mode === "complete" || postureModalOpen) {
+      return;
+    }
+
+    setPosturePromptMode(nextDeskMode);
+    setNextDeskMode((previous) => (previous === "standing" ? "sitting" : "standing"));
+    setResumeAfterPostureReminder(isRunning);
+    setPostureModalOpen(true);
+    setIsRunning(false);
+  }
+
   function openResetDayModal() {
     setResetConfirmationText("");
     pauseForTransientModal(() => setResetDayModalOpen(true));
@@ -850,6 +987,7 @@ export default function Home() {
     setIsRunning(false);
     setPlannerError("");
     setElapsedActiveSeconds(0);
+    setLastPostureReminderElapsedSeconds(0);
     setPostureModalOpen(false);
     setPosturePromptMode("standing");
     setNextDeskMode("standing");
@@ -1019,7 +1157,7 @@ export default function Home() {
       : mode === "focus"
         ? "You can extend the block with confirmation, or request a capped intermittent break or one-time meal break."
         : mode === "scheduledBreak"
-          ? "Short breaks stay capped at 10 minutes, but you can still claim one breakfast, lunch, and dinner break."
+          ? "Short breaks stay capped at 20 minutes, but you can still claim one breakfast, lunch, and dinner break."
           : mode === "intermittentBreak"
             ? "This break was taken in the middle of a focus block. You will return to the same task when it ends."
             : mode === "mealBreak"
@@ -1043,18 +1181,20 @@ export default function Home() {
       <AddTaskModal
         open={addTaskModalOpen}
         title={addTaskTitle}
-        minutes={addTaskMinutes}
+        minutesInput={addTaskMinutesInput}
         error={addTaskError}
         onTitleChange={setAddTaskTitle}
-        onMinutesChange={(value) => setAddTaskMinutes(clampMinutes(value, 1, 240))}
+        onMinutesInputChange={updateAddTaskMinutesInput}
+        onMinutesBlur={normalizeAddTaskMinutesInput}
         onCancel={() => setAddTaskModalOpen(false)}
         onConfirm={confirmAddTask}
       />
 
       <ExtendFocusModal
         open={focusExtendModalOpen}
-        minutes={focusExtendMinutes}
-        onMinutesChange={(value) => setFocusExtendMinutes(clampMinutes(value, 1, 180))}
+        minutesInput={focusExtendMinutesInput}
+        onMinutesInputChange={updateFocusExtendMinutesInput}
+        onMinutesBlur={normalizeFocusExtendMinutesInput}
         onCancel={cancelFocusExtend}
         onConfirm={confirmFocusExtend}
       />
@@ -1064,12 +1204,13 @@ export default function Home() {
         kicker="Intermittent break"
         title="Confirm the break before you leave the block"
         description="Read the prompt, reflect honestly, and then choose either a short break or one of your one-time meal breaks."
-        shortBreakMinutes={intermittentBreakMinutes}
+        shortBreakMinutesInput={intermittentBreakMinutesInput}
         maxShortBreakMinutes={MAX_BREAK_MINUTES}
         selectedMeal={intermittentSelectedMeal}
         mealUsage={usedMeals}
         error={intermittentError}
-        onShortBreakMinutesChange={(value) => setIntermittentBreakMinutes(clampMinutes(value, 1, MAX_BREAK_MINUTES))}
+        onShortBreakMinutesInputChange={updateIntermittentBreakMinutesInput}
+        onShortBreakMinutesBlur={normalizeIntermittentBreakMinutesInput}
         onMealSelect={setIntermittentSelectedMeal}
         onCancel={cancelIntermittentBreak}
         onConfirm={confirmIntermittentBreak}
@@ -1095,13 +1236,14 @@ export default function Home() {
         open={breakExtendModalOpen}
         kicker="Break extension"
         title="Extend the current break or swap to a meal break"
-        description="Short breaks stay capped at 10 total minutes, but you can still use an unused meal break here if you need a longer reset."
-        shortBreakMinutes={breakExtendMinutes}
+        description="Short breaks stay capped at 20 total minutes, but you can still use an unused meal break here if you need a longer reset."
+        shortBreakMinutesInput={breakExtendMinutesInput}
         maxShortBreakMinutes={availableBreakExtensionMinutes}
         selectedMeal={breakExtendSelectedMeal}
         mealUsage={usedMeals}
         error={breakExtendError}
-        onShortBreakMinutesChange={(value) => setBreakExtendMinutes(clampMinutes(value, 1, Math.max(availableBreakExtensionMinutes, 1)))}
+        onShortBreakMinutesInputChange={updateBreakExtendMinutesInput}
+        onShortBreakMinutesBlur={normalizeBreakExtendMinutesInput}
         onMealSelect={setBreakExtendSelectedMeal}
         onCancel={cancelBreakExtension}
         onConfirm={confirmBreakExtension}
@@ -1192,6 +1334,11 @@ export default function Home() {
                   ? "Return to focus now"
                   : "Start next focus"}
             </button>
+            {SHOW_TEMP_POSTURE_TEST_CONTROLS ? (
+              <button type="button" className="ghost-button" onClick={triggerPostureReminderTest} disabled={mode === "complete"}>
+                [TEMP] Trigger posture check
+              </button>
+            ) : null}
           </div>
 
           <div className="main-mode-meta">
@@ -1294,8 +1441,9 @@ export default function Home() {
                   type="number"
                   min={1}
                   max={MAX_BREAK_MINUTES}
-                  value={breakMinutes}
-                  onChange={(event) => setBreakMinutes(clampMinutes(Number(event.target.value) || 1, 1, MAX_BREAK_MINUTES))}
+                  value={breakMinutesInput}
+                  onChange={(event) => updateBreakMinutesInput(event.target.value)}
+                  onBlur={normalizeBreakMinutesInput}
                 />
               </label>
 
@@ -1394,6 +1542,11 @@ export default function Home() {
                   ? "Return to focus now"
                   : "Start next focus"}
             </button>
+            {SHOW_TEMP_POSTURE_TEST_CONTROLS ? (
+              <button type="button" className="ghost-button" onClick={triggerPostureReminderTest} disabled={mode === "planning" || mode === "complete"}>
+                [TEMP] Trigger posture check
+              </button>
+            ) : null}
           </div>
 
           <div className="insight-strip">

@@ -15,18 +15,20 @@ type ModalShellProps = {
 type AddTaskModalProps = {
   open: boolean;
   title: string;
-  minutes: number;
+  minutesInput: string;
   error: string;
   onTitleChange: (value: string) => void;
-  onMinutesChange: (value: number) => void;
+  onMinutesInputChange: (value: string) => void;
+  onMinutesBlur: () => void;
   onCancel: () => void;
   onConfirm: () => void;
 };
 
 type ExtendFocusModalProps = {
   open: boolean;
-  minutes: number;
-  onMinutesChange: (value: number) => void;
+  minutesInput: string;
+  onMinutesInputChange: (value: string) => void;
+  onMinutesBlur: () => void;
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -38,12 +40,13 @@ type BreakDecisionModalProps = {
   kicker: string;
   title: string;
   description: string;
-  shortBreakMinutes: number;
+  shortBreakMinutesInput: string;
   maxShortBreakMinutes: number;
   selectedMeal: MealType | null;
   mealUsage: MealUsage;
   error: string;
-  onShortBreakMinutesChange: (value: number) => void;
+  onShortBreakMinutesInputChange: (value: string) => void;
+  onShortBreakMinutesBlur: () => void;
   onMealSelect: (meal: MealType | null) => void;
   onCancel: () => void;
   onConfirm: () => void;
@@ -144,10 +147,11 @@ function MealSelector({
 export function AddTaskModal({
   open,
   title,
-  minutes,
+  minutesInput,
   error,
   onTitleChange,
-  onMinutesChange,
+  onMinutesInputChange,
+  onMinutesBlur,
   onCancel,
   onConfirm
 }: AddTaskModalProps) {
@@ -169,8 +173,9 @@ export function AddTaskModal({
           <input
             type="number"
             min={1}
-            value={minutes}
-            onChange={(event) => onMinutesChange(Number(event.target.value) || 1)}
+            value={minutesInput}
+            onChange={(event) => onMinutesInputChange(event.target.value)}
+            onBlur={onMinutesBlur}
           />
         </label>
 
@@ -191,8 +196,9 @@ export function AddTaskModal({
 
 export function ExtendFocusModal({
   open,
-  minutes,
-  onMinutesChange,
+  minutesInput,
+  onMinutesInputChange,
+  onMinutesBlur,
   onCancel,
   onConfirm
 }: ExtendFocusModalProps) {
@@ -209,8 +215,9 @@ export function ExtendFocusModal({
             type="number"
             min={1}
             max={180}
-            value={minutes}
-            onChange={(event) => onMinutesChange(Number(event.target.value) || 1)}
+            value={minutesInput}
+            onChange={(event) => onMinutesInputChange(event.target.value)}
+            onBlur={onMinutesBlur}
           />
         </label>
 
@@ -232,12 +239,13 @@ export function BreakDecisionModal({
   kicker,
   title,
   description,
-  shortBreakMinutes,
+  shortBreakMinutesInput,
   maxShortBreakMinutes,
   selectedMeal,
   mealUsage,
   error,
-  onShortBreakMinutesChange,
+  onShortBreakMinutesInputChange,
+  onShortBreakMinutesBlur,
   onMealSelect,
   onCancel,
   onConfirm,
@@ -259,17 +267,18 @@ export function BreakDecisionModal({
               type="number"
               min={1}
               max={Math.max(maxShortBreakMinutes, 1)}
-              value={shortBreakMinutes}
+              value={shortBreakMinutesInput}
               onChange={(event) => {
                 onMealSelect(null);
-                onShortBreakMinutesChange(Number(event.target.value) || 1);
+                onShortBreakMinutesInputChange(event.target.value);
               }}
+              onBlur={onShortBreakMinutesBlur}
               disabled={maxShortBreakMinutes === 0}
             />
           </label>
           <p className="info-note">
-            Standard breaks cannot exceed 10 minutes total.
-            {maxShortBreakMinutes > 0 ? ` You can add up to ${maxShortBreakMinutes} more minute${maxShortBreakMinutes === 1 ? "" : "s"} right now.` : " This break is already at the 10-minute cap."}
+            Standard breaks cannot exceed 20 minutes total.
+            {maxShortBreakMinutes > 0 ? ` You can add up to ${maxShortBreakMinutes} more minute${maxShortBreakMinutes === 1 ? "" : "s"} right now.` : " This break is already at the 20-minute cap."}
           </p>
         </div>
 

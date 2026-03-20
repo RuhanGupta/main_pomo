@@ -728,14 +728,20 @@ label span {
   padding: 24px;
   background: color-mix(in oklch, black 36%, transparent 64%);
   z-index: 20;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-card {
   width: min(680px, 100%);
+  max-width: calc(100vw - 48px);
+  max-height: calc(100dvh - 48px);
   padding: 28px;
   border-radius: 28px;
   background: color-mix(in oklch, var(--popover) 96%, black 4%);
   border: 1px solid var(--line);
+  overflow-y: auto;
 }
 
 .modal-section {
@@ -856,6 +862,22 @@ label span {
   .modal-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .modal-backdrop {
+    place-items: start stretch;
+    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .modal-card {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - max(24px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+    margin: auto 0;
+  }
+
+  .modal-actions > * {
+    width: 100%;
   }
 
   .timeline-item {
