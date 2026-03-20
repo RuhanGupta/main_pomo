@@ -1,21 +1,54 @@
 :root {
-  --bg: #f5ecde;
-  --panel: rgba(255, 250, 243, 0.84);
-  --panel-strong: rgba(255, 249, 241, 0.96);
-  --panel-soft: rgba(255, 255, 255, 0.62);
-  --ink: #221d18;
-  --muted: #6d6258;
-  --accent: #cb6336;
-  --accent-deep: #8e3f22;
-  --accent-soft: rgba(203, 99, 54, 0.11);
-  --sea: #215f62;
-  --sea-soft: rgba(33, 95, 98, 0.11);
-  --gold: #8f6e2f;
-  --line: rgba(34, 29, 24, 0.1);
-  --line-strong: rgba(34, 29, 24, 0.18);
-  --danger: #a44228;
-  --danger-soft: rgba(164, 66, 40, 0.12);
-  --shadow: 0 28px 80px rgba(84, 56, 33, 0.16);
+  --background: oklch(0.1173 0.009 73.4751);
+  --foreground: oklch(0.9796 0.0017 67.8026);
+  --card: oklch(0.1609 0.0115 80.9823);
+  --card-foreground: oklch(0.9796 0.0017 67.8026);
+  --popover: oklch(0.1405 0.0109 88.4982);
+  --popover-foreground: oklch(0.9796 0.0017 67.8026);
+  --primary: oklch(0.783 0.0384 132.737);
+  --primary-foreground: oklch(0.0986 0.0063 72.5271);
+  --secondary: oklch(0.251 0.0148 76.2105);
+  --secondary-foreground: oklch(0.9198 0.0075 80.7204);
+  --muted-color: oklch(0.2203 0.0129 77.9565);
+  --muted-foreground: oklch(0.6511 0.0081 80.7132);
+  --accent: oklch(0.4429 0.0444 134.5073);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.4926 0.1864 26.2192);
+  --destructive-foreground: oklch(0.9796 0.0017 67.8026);
+  --border: oklch(0.2806 0.0246 82.6847);
+  --input: oklch(0.1994 0.0155 75.9533);
+  --ring: oklch(0.783 0.0384 132.737);
+  --chart-1: oklch(0.5636 0.1645 136.9338);
+  --chart-2: oklch(0.6509 0.1756 135.9702);
+  --chart-3: oklch(0.7246 0.1732 135.119);
+  --chart-4: oklch(0.8539 0.1402 133.7838);
+  --chart-5: oklch(0.783 0.0384 132.737);
+  --radius: 1.4rem;
+  --shadow-2xs: 0px 2px 12px 0px hsl(0 0% 0% / 0.17);
+  --shadow-xs: 0px 2px 12px 0px hsl(0 0% 0% / 0.17);
+  --shadow-sm: 0px 2px 12px 0px hsl(0 0% 0% / 0.35), 0px 1px 2px -1px hsl(0 0% 0% / 0.35);
+  --shadow: 0px 2px 12px 0px hsl(0 0% 0% / 0.35), 0px 1px 2px -1px hsl(0 0% 0% / 0.35);
+  --shadow-md: 0px 2px 12px 0px hsl(0 0% 0% / 0.35), 0px 2px 4px -1px hsl(0 0% 0% / 0.35);
+  --shadow-lg: 0px 2px 12px 0px hsl(0 0% 0% / 0.35), 0px 4px 6px -1px hsl(0 0% 0% / 0.35);
+  --shadow-xl: 0px 2px 12px 0px hsl(0 0% 0% / 0.35), 0px 8px 10px -1px hsl(0 0% 0% / 0.35);
+  --shadow-2xl: 0px 2px 12px 0px hsl(0 0% 0% / 0.88);
+  --tracking-normal: -0.025em;
+
+  --bg: var(--background);
+  --panel: color-mix(in oklch, var(--card) 90%, var(--secondary) 10%);
+  --panel-strong: color-mix(in oklch, var(--card) 96%, var(--primary) 4%);
+  --panel-soft: color-mix(in oklch, var(--card) 84%, transparent 16%);
+  --ink: var(--foreground);
+  --muted: var(--muted-foreground);
+  --accent-deep: var(--accent);
+  --accent-soft: color-mix(in oklch, var(--primary) 16%, transparent 84%);
+  --sea: var(--accent);
+  --sea-soft: color-mix(in oklch, var(--accent) 12%, transparent 88%);
+  --gold: var(--chart-3);
+  --line: color-mix(in oklch, var(--border) 82%, transparent 18%);
+  --line-strong: var(--border);
+  --danger: var(--destructive);
+  --danger-soft: color-mix(in oklch, var(--destructive) 12%, transparent 88%);
 }
 
 * {
@@ -32,9 +65,14 @@ body {
   color: var(--ink);
   font-family: "Avenir Next", "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(203, 99, 54, 0.18), transparent 28%),
-    radial-gradient(circle at top right, rgba(33, 95, 98, 0.16), transparent 26%),
-    linear-gradient(180deg, #fff8ef 0%, #f5ecde 48%, #eeddc5 100%);
+    radial-gradient(circle at top left, color-mix(in oklch, var(--primary) 26%, transparent 74%), transparent 30%),
+    radial-gradient(circle at top right, color-mix(in oklch, var(--accent) 18%, transparent 82%), transparent 28%),
+    linear-gradient(
+      180deg,
+      color-mix(in oklch, var(--background) 100%, black 0%) 0%,
+      color-mix(in oklch, var(--secondary) 28%, var(--background) 72%) 100%
+    );
+  letter-spacing: var(--tracking-normal);
 }
 
 button,
@@ -50,17 +88,17 @@ button {
 input,
 textarea {
   width: 100%;
-  border: 1px solid rgba(34, 29, 24, 0.14);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--input);
   color: var(--ink);
 }
 
 input:focus,
 textarea:focus {
-  outline: 2px solid rgba(203, 99, 54, 0.32);
-  border-color: rgba(203, 99, 54, 0.56);
+  outline: 2px solid color-mix(in oklch, var(--ring) 40%, transparent 60%);
+  border-color: var(--ring);
 }
 
 label {
@@ -76,6 +114,7 @@ label {
 
 .main-mode-shell {
   min-height: 100dvh;
+  width: 100%;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -86,11 +125,11 @@ label {
   display: grid;
   gap: 20px;
   padding: 28px;
-  border-radius: 32px;
-  background: rgba(255, 252, 247, 0.82);
-  border: 1px solid rgba(34, 29, 24, 0.08);
+  border-radius: calc(var(--radius) + 0.4rem);
+  background: color-mix(in oklch, var(--card) 94%, black 6%);
+  border: 1px solid var(--line);
   backdrop-filter: blur(20px);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-xl);
 }
 
 .main-topbar,
@@ -114,9 +153,13 @@ label {
   display: grid;
   gap: 10px;
   padding: 28px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(34, 29, 24, 0.08);
+  border-radius: calc(var(--radius) + 0.1rem);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--card) 96%, var(--secondary) 4%),
+    color-mix(in oklch, var(--secondary) 40%, var(--card) 60%)
+  );
+  border: 1px solid var(--line);
   text-align: center;
 }
 
@@ -155,14 +198,18 @@ label {
 .main-mode-message {
   padding: 18px 20px;
   border-radius: 22px;
-  background: rgba(203, 99, 54, 0.08);
-  border: 1px solid rgba(203, 99, 54, 0.12);
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--primary) 18%, transparent 82%),
+    color-mix(in oklch, var(--accent) 18%, transparent 82%)
+  );
+  border: 1px solid color-mix(in oklch, var(--primary) 34%, transparent 66%);
 }
 
 .main-mode-message span {
   display: block;
   margin-bottom: 8px;
-  color: var(--accent-deep);
+  color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.74rem;
@@ -187,8 +234,8 @@ label {
 .main-mode-meta > div {
   padding: 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.56);
-  border: 1px solid rgba(34, 29, 24, 0.08);
+  background: color-mix(in oklch, var(--card) 92%, black 8%);
+  border: 1px solid var(--line);
 }
 
 .hero-panel,
@@ -209,9 +256,13 @@ label {
   grid-template-columns: 1.15fr 0.85fr;
   gap: 24px;
   padding: 30px;
-  border-radius: 30px;
-  background: linear-gradient(135deg, rgba(255, 251, 246, 0.98), rgba(248, 235, 218, 0.82));
-  border: 1px solid rgba(142, 63, 34, 0.11);
+  border-radius: calc(var(--radius) + 0.4rem);
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--card) 94%, var(--primary) 6%),
+    color-mix(in oklch, var(--secondary) 60%, var(--background) 40%)
+  );
+  border: 1px solid var(--line);
 }
 
 .hero-copy,
@@ -244,7 +295,7 @@ label {
 .eyebrow,
 .section-kicker {
   margin: 0;
-  color: var(--accent-deep);
+  color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-size: 0.78rem;
@@ -267,8 +318,8 @@ label {
   min-height: 128px;
   padding: 18px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(34, 29, 24, 0.08);
+  background: color-mix(in oklch, var(--card) 94%, black 6%);
+  border: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -350,7 +401,7 @@ label span {
   padding: 18px;
   border-radius: 20px;
   background: var(--panel-strong);
-  border: 1px solid rgba(34, 29, 24, 0.08);
+  border: 1px solid var(--line);
 }
 
 .task-card-top,
@@ -377,15 +428,15 @@ label span {
 }
 
 .task-card-done {
-  background: rgba(33, 95, 98, 0.1);
+  background: color-mix(in oklch, var(--accent) 12%, var(--card) 88%);
 }
 
 .task-card-in-progress {
-  background: rgba(203, 99, 54, 0.12);
+  background: color-mix(in oklch, var(--primary) 16%, var(--card) 84%);
 }
 
 .task-card-next-up {
-  border-color: rgba(143, 110, 47, 0.24);
+  border-color: color-mix(in oklch, var(--chart-3) 34%, transparent 66%);
 }
 
 .sheet-pill {
@@ -399,22 +450,22 @@ label span {
 }
 
 .sheet-pill-done {
-  background: rgba(33, 95, 98, 0.14);
-  color: var(--sea);
+  background: color-mix(in oklch, var(--accent) 16%, transparent 84%);
+  color: var(--accent);
 }
 
 .sheet-pill-in-progress {
-  background: rgba(203, 99, 54, 0.14);
-  color: var(--accent-deep);
+  background: color-mix(in oklch, var(--primary) 18%, transparent 82%);
+  color: var(--accent);
 }
 
 .sheet-pill-next-up {
-  background: rgba(143, 110, 47, 0.13);
+  background: color-mix(in oklch, var(--chart-3) 20%, transparent 80%);
   color: var(--gold);
 }
 
 .sheet-pill-pending {
-  background: rgba(34, 29, 24, 0.08);
+  background: color-mix(in oklch, var(--secondary) 88%, transparent 12%);
   color: var(--ink);
 }
 
@@ -430,8 +481,8 @@ label span {
   gap: 10px;
   padding: 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid rgba(34, 29, 24, 0.08);
+  background: color-mix(in oklch, var(--card) 92%, black 8%);
+  border: 1px solid var(--line);
 }
 
 .meal-summary-grid,
@@ -447,14 +498,14 @@ label span {
   align-items: center;
   min-height: 38px;
   border-radius: 999px;
-  background: rgba(33, 95, 98, 0.08);
-  color: var(--sea);
+  background: color-mix(in oklch, var(--accent) 10%, transparent 90%);
+  color: var(--accent);
   text-transform: capitalize;
   font-size: 0.9rem;
 }
 
 .meal-summary-pill-used {
-  background: rgba(34, 29, 24, 0.08);
+  background: color-mix(in oklch, var(--secondary) 88%, transparent 12%);
   color: var(--muted);
 }
 
@@ -462,14 +513,18 @@ label span {
   padding: 24px;
   border-radius: 24px;
   background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.44), transparent 44%),
-    linear-gradient(145deg, rgba(28, 96, 100, 0.97), rgba(14, 54, 58, 0.96));
-  color: #eef8f6;
+    radial-gradient(circle at top, color-mix(in oklch, white 48%, transparent 52%), transparent 44%),
+    linear-gradient(
+      145deg,
+      color-mix(in oklch, var(--accent) 92%, black 8%),
+      color-mix(in oklch, var(--primary) 75%, var(--accent) 25%)
+    );
+  color: var(--accent-foreground);
 }
 
 .clock-label,
 .clock-subtitle {
-  color: rgba(238, 248, 246, 0.78);
+  color: color-mix(in oklch, var(--accent-foreground) 78%, transparent 22%);
 }
 
 .clock-label,
@@ -499,20 +554,20 @@ label span {
 }
 
 .status-focus {
-  background: rgba(203, 99, 54, 0.14);
-  color: var(--accent-deep);
+  background: color-mix(in oklch, var(--primary) 18%, transparent 82%);
+  color: var(--accent);
 }
 
 .status-scheduledBreak,
 .status-intermittentBreak,
 .status-mealBreak {
-  background: rgba(33, 95, 98, 0.14);
-  color: var(--sea);
+  background: color-mix(in oklch, var(--accent) 14%, transparent 86%);
+  color: var(--accent);
 }
 
 .status-planning,
 .status-complete {
-  background: rgba(34, 29, 24, 0.08);
+  background: color-mix(in oklch, var(--secondary) 88%, transparent 12%);
   color: var(--ink);
 }
 
@@ -523,8 +578,8 @@ label span {
 .insight-strip > div {
   padding: 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.56);
-  border: 1px solid rgba(34, 29, 24, 0.08);
+  background: color-mix(in oklch, var(--card) 92%, black 8%);
+  border: 1px solid var(--line);
 }
 
 .timeline-item {
@@ -534,8 +589,8 @@ label span {
   align-items: center;
   padding: 16px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(34, 29, 24, 0.08);
+  background: color-mix(in oklch, var(--card) 92%, black 8%);
+  border: 1px solid var(--line);
 }
 
 .timeline-time {
@@ -549,11 +604,11 @@ label span {
 }
 
 .timeline-focus {
-  border-left: 6px solid var(--accent);
+  border-left: 6px solid var(--primary);
 }
 
 .timeline-break {
-  border-left: 6px solid var(--sea);
+  border-left: 6px solid var(--accent);
 }
 
 .timeline-meal {
@@ -563,8 +618,8 @@ label span {
 .empty-state {
   padding: 24px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.68);
-  border: 1px dashed rgba(34, 29, 24, 0.14);
+  background: color-mix(in oklch, var(--card) 92%, black 8%);
+  border: 1px dashed var(--border);
   display: grid;
   gap: 16px;
   justify-items: start;
@@ -586,20 +641,24 @@ label span {
 }
 
 .primary-button {
-  background: linear-gradient(135deg, var(--accent), #e48654);
-  color: #fff8f1;
-  box-shadow: 0 16px 32px rgba(203, 99, 54, 0.27);
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--primary) 92%, white 8%),
+    color-mix(in oklch, var(--accent) 55%, var(--primary) 45%)
+  );
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-lg);
 }
 
 .secondary-button {
-  background: var(--sea-soft);
-  color: var(--sea);
+  background: color-mix(in oklch, var(--secondary) 92%, black 8%);
+  color: var(--secondary-foreground);
 }
 
 .ghost-button {
   background: transparent;
   color: var(--muted);
-  border: 1px solid rgba(34, 29, 24, 0.14);
+  border: 1px solid var(--border);
 }
 
 .strong-ghost {
@@ -614,8 +673,8 @@ label span {
 .meal-chip {
   min-height: 78px;
   padding: 16px 14px;
-  border: 1px solid rgba(34, 29, 24, 0.1);
-  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--card) 92%, black 8%);
   color: var(--ink);
   display: flex;
   flex-direction: column;
@@ -625,8 +684,8 @@ label span {
 }
 
 .meal-chip-active {
-  background: rgba(143, 110, 47, 0.16);
-  border-color: rgba(143, 110, 47, 0.24);
+  background: color-mix(in oklch, var(--chart-3) 20%, transparent 80%);
+  border-color: color-mix(in oklch, var(--chart-3) 34%, transparent 66%);
 }
 
 .primary-button:hover,
@@ -660,7 +719,7 @@ label span {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(22, 21, 19, 0.55);
+  background: color-mix(in oklch, black 36%, transparent 64%);
   z-index: 20;
 }
 
@@ -668,7 +727,8 @@ label span {
   width: min(680px, 100%);
   padding: 28px;
   border-radius: 28px;
-  background: rgba(255, 248, 240, 0.98);
+  background: color-mix(in oklch, var(--popover) 96%, black 4%);
+  border: 1px solid var(--line);
 }
 
 .modal-section {
@@ -686,8 +746,8 @@ label span {
   margin: 0;
   padding: 16px 18px;
   border-radius: 18px;
-  background: rgba(203, 99, 54, 0.09);
-  color: var(--accent-deep);
+  background: color-mix(in oklch, var(--primary) 12%, transparent 88%);
+  color: var(--accent);
   line-height: 1.7;
 }
 
@@ -699,14 +759,14 @@ label span {
 }
 
 .word-counter-ready {
-  color: var(--sea);
+  color: var(--accent);
   font-weight: 700;
 }
 
 .posture-checklist {
   padding: 16px 18px;
   border-radius: 18px;
-  background: rgba(33, 95, 98, 0.08);
+  background: color-mix(in oklch, var(--accent) 16%, transparent 84%);
   color: var(--ink);
 }
 
@@ -725,8 +785,8 @@ label span {
 .report-preview {
   padding: 18px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(34, 29, 24, 0.08);
+  background: color-mix(in oklch, var(--card) 92%, black 8%);
+  border: 1px solid var(--line);
   display: grid;
   gap: 8px;
 }
@@ -805,13 +865,16 @@ label span {
   .main-mode-shell {
     min-height: 100dvh;
     height: 100dvh;
-    padding: 8px;
+    width: 100vw;
+    padding: 0;
+    place-items: stretch;
     overflow: hidden;
   }
 
   .main-mode-frame {
-    width: min(100%, 900px);
-    height: calc(100dvh - 16px);
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
     grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
     grid-template-areas:
       "top top"
@@ -819,8 +882,14 @@ label span {
       "message actions"
       "meta meta";
     gap: 10px 12px;
-    padding: 14px;
-    border-radius: 24px;
+    padding:
+      max(10px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      max(10px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
   }
 
   .main-topbar {
